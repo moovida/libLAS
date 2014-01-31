@@ -24,22 +24,20 @@ then
     wget http://download.osgeo.org/laszip/laszip-2.1.0.tar.gz
     tar xvfz laszip-2.1.0.tar.gz
     cd laszip-2.1.0
-    mkdir build
-    mkdir cmake_build
-    cd cmake_build
-    cmake .. -DCMAKE_INSTALL_PREFIX=/opt/source/laszip-2.1.0/build
+    cmake -G "Unix Makefiles"
     make -j4
     make install
 
     echo "Please update the environmental variables for your new library and binary path"
     echo "in .bashrc or profile by addin the following lines:"
-    echo "export LD_LIBRARY_PATH=\"/opt/source/laszip-2.1.0/build/lib:$LD_LIBRARY_PATH\""
-    echo "export PATH=\"/opt/source/laszip-2.1.0/build/bin:$PATH\""
+    echo "export LD_LIBRARY_PATH=\"$LD_LIBRARY_PATH:/usr/local/lib/\""
+    echo "export PATH=\"$PATH:/usr/local/bin/\""
 fi
 
 if [ DO_LIBLAS ]
 then
     cmake -G "Unix Makefiles" \
+      -DWITH_GDAL:BOOL=TRUE -DWITH_LASZIP:BOOL=TRUE -DWITH_GEOTIFF:BOOL=TRUE \
       -DTIFF_INCLUDE_DIR=/usr/include \
       -DTIFF_LIBRARY=/usr/lib/x86_64-linux-gnu/libtiff.so \
       -DGEOTIFF_INCLUDE_DIR=/usr/include/geotiff \
@@ -47,8 +45,8 @@ then
       -DGDAL_CONFIG=/usr/bin/gdal-config \
       -DGDAL_INCLUDE_DIR=/usr/include/gdal \
       -DGDAL_LIBRARY=/usr/lib/libgdal1.7.0.so \
-      -DLASZIP_INCLUDE_DIR=/opt/source/laszip-2.1.0/build/include \
-      -DLASZIP_LIBRARY=/opt/source/laszip-2.1.0/build/lib/liblaszip.so
+      -DLASZIP_INCLUDE_DIR=/usr/local/include/ \
+      -DLASZIP_LIBRARY=/usr/local/lib/liblaszip.so
 
     make -j4
     sudo make install
