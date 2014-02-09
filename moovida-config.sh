@@ -44,7 +44,7 @@ then
       -DGEOTIFF_LIBRARY=/usr/lib/libgeotiff.so \
       -DGDAL_CONFIG=/usr/bin/gdal-config \
       -DGDAL_INCLUDE_DIR=/usr/include/gdal \
-      -DGDAL_LIBRARY=/usr/lib/libgdal1.7.0.so \
+      -DGDAL_LIBRARY=/usr/lib/libgdal.so \
       -DLASZIP_INCLUDE_DIR=/usr/local/include/ \
       -DLASZIP_LIBRARY=/usr/local/lib/liblaszip.so
 
