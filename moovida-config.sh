@@ -11,22 +11,22 @@ DO_LIBLAS=true
 if [ DO_PREINSTALL ]
 then
     echo "Install some dependencies"
-    sudo apt-get install libboost-dev libboost-program-options1.46-dev \
-        libboost-thread1.46-dev libboost-system-dev \
-        proj proj-bin proj-data libproj-dev libtiff4-dev libgeotiff-dev \
-        libgdal1-dev gdal-bin python-gdal libgdal1-1.7.0
+    sudo apt-get install libboost-dev libboost-program-options-dev \
+        libboost-thread-dev libboost-system-dev \
+        libproj0 proj-bin libproj-dev libtiff-dev libgeotiff-dev \
+        libgdal1-dev gdal-bin python-gdal libgdal1 cmake g++
 fi
 
 if [ DO_LASZIP ]
 then
-    sudo -s
+    sudo mkdir /opt/source
     cd /opt/source
-    wget http://download.osgeo.org/laszip/laszip-2.1.0.tar.gz
-    tar xvfz laszip-2.1.0.tar.gz
+    sudo wget http://download.osgeo.org/laszip/laszip-2.1.0.tar.gz
+    sudo tar xvfz laszip-2.1.0.tar.gz
     cd laszip-2.1.0
-    cmake -G "Unix Makefiles"
-    make -j4
-    make install
+    sudo cmake -G "Unix Makefiles"
+    sudo make -j4
+    sudo make install
 
     echo "Please update the environmental variables for your new library and binary path"
     echo "in .bashrc or profile by addin the following lines:"
@@ -36,7 +36,7 @@ fi
 
 if [ DO_LIBLAS ]
 then
-    cmake -G "Unix Makefiles" \
+    sudo cmake -G "Unix Makefiles" \
       -DWITH_GDAL:BOOL=TRUE -DWITH_LASZIP:BOOL=TRUE -DWITH_GEOTIFF:BOOL=TRUE \
       -DTIFF_INCLUDE_DIR=/usr/include \
       -DTIFF_LIBRARY=/usr/lib/x86_64-linux-gnu/libtiff.so \
@@ -48,7 +48,7 @@ then
       -DLASZIP_INCLUDE_DIR=/usr/local/include/ \
       -DLASZIP_LIBRARY=/usr/local/lib/liblaszip.so
 
-    make -j4
+    sudo make -j4
     sudo make install
 fi
 
