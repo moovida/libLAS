@@ -49,15 +49,15 @@
 #include <liblas/export.hpp>
 #include <liblas/filter.hpp>
 // boost
-#include <boost/cstdint.hpp>
 #include <boost/foreach.hpp>
 // std
 #include <vector>
 #include <functional>
 #include <string>
+#include <memory>
 
 using liblas::property_tree::ptree;
-typedef boost::array<boost::uint32_t, 32> classes_type;
+typedef boost::array<uint32_t, 32> classes_type;
 
 namespace liblas {
 
@@ -79,15 +79,15 @@ public:
 private:
 
     classes_type classes;
-    boost::uint32_t synthetic;
-    boost::uint32_t withheld;
-    boost::uint32_t keypoint;
-    boost::uint32_t count;
-    boost::array<boost::uint32_t, 8> points_by_return; 
-    boost::array<boost::uint32_t, 8> returns_of_given_pulse;
+    uint32_t synthetic;
+    uint32_t withheld;
+    uint32_t keypoint;
+    uint32_t count;
+    boost::array<uint32_t, 8> points_by_return; 
+    boost::array<uint32_t, 8> returns_of_given_pulse;
     bool first;
-    liblas::Point minimum;
-    liblas::Point maximum;
+    boost::shared_ptr<liblas::Point> minimum;
+    boost::shared_ptr<liblas::Point> maximum;
     liblas::Header m_header;
     bool bHaveHeader; 
     bool bHaveColor;
@@ -111,12 +111,12 @@ public:
     
 private:
 
-    boost::uint32_t count;
-    boost::array<boost::uint32_t, 8> points_by_return; 
-    boost::array<boost::uint32_t, 8> returns_of_given_pulse;
+    uint32_t count;
+    boost::array<uint32_t, 8> points_by_return; 
+    boost::array<uint32_t, 8> returns_of_given_pulse;
     bool first;
-    liblas::Point minimum;
-    liblas::Point maximum;
+    boost::shared_ptr<liblas::Point> minimum;
+    boost::shared_ptr<liblas::Point> maximum;
     liblas::Header m_header;
     bool bHaveHeader; 
     bool bHaveColor;
@@ -125,7 +125,7 @@ private:
 
 LAS_DLL std::ostream& operator<<(std::ostream& os, liblas::Summary const& s);
 
-LAS_DLL boost::uint32_t GetStreamPrecision(double scale);
+LAS_DLL uint32_t GetStreamPrecision(double scale);
 
 } // namespace liblas
 

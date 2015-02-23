@@ -77,8 +77,8 @@ Summary::Summary(Summary const& other)
     , points_by_return(other.points_by_return)
     , returns_of_given_pulse(other.returns_of_given_pulse)
     , first(other.first)
-    , minimum(other.maximum)
-    , maximum(other.maximum)
+    , minimum(boost::shared_ptr<liblas::Point>(new liblas::Point(*other.minimum)))
+    , maximum(boost::shared_ptr<liblas::Point>(new liblas::Point(*other.maximum)))
     , m_header(other.m_header)
     , bHaveHeader(other.bHaveHeader)
     , bHaveColor(other.bHaveColor)
@@ -98,8 +98,8 @@ Summary& Summary::operator=(Summary const& rhs)
         first = rhs.first;
         points_by_return = rhs.points_by_return;
         returns_of_given_pulse = rhs.returns_of_given_pulse;
-        minimum = rhs.minimum;
-        maximum = rhs.maximum;
+        minimum = boost::shared_ptr<liblas::Point>(new liblas::Point(*rhs.minimum));
+        maximum =  boost::shared_ptr<liblas::Point>(new liblas::Point(*rhs.maximum));
         m_header = rhs.m_header;
         bHaveHeader = rhs.bHaveHeader;
         bHaveColor = rhs.bHaveColor;
@@ -114,8 +114,8 @@ void Summary::AddPoint(liblas::Point const& p)
 
         if (first) {
             
-            minimum = p;
-            maximum = p;
+            minimum = boost::shared_ptr<liblas::Point>(new liblas::Point(p));
+            maximum = boost::shared_ptr<liblas::Point>(new liblas::Point(p));
             
             // We only summarize the base dimensions 
             // but we want to be able to read/set them all.  The 
@@ -126,8 +126,8 @@ void Summary::AddPoint(liblas::Point const& p)
 
             if (bHaveHeader)
             {
-                maximum.SetHeader(&m_header);
-                minimum.SetHeader(&m_header);
+                maximum.get()->SetHeader(&m_header);
+                minimum.get()->SetHeader(&m_header);
             }
 
             liblas::Header const* h = p.GetHeader();
@@ -159,76 +159,76 @@ void Summary::AddPoint(liblas::Point const& p)
             first = false;
         }
         
-        if (p.GetRawX() < minimum.GetRawX() )
-            minimum.SetRawX(p.GetRawX());
-        if (p.GetRawX() > maximum.GetRawX() )
-            maximum.SetRawX(p.GetRawX());
+        if (p.GetRawX() < minimum.get()->GetRawX() )
+            minimum.get()->SetRawX(p.GetRawX());
+        if (p.GetRawX() > maximum.get()->GetRawX() )
+            maximum.get()->SetRawX(p.GetRawX());
 
-        if (p.GetRawY() < minimum.GetRawY() )
-            minimum.SetRawY(p.GetRawY());
-        if (p.GetRawY() > maximum.GetRawY() )
-            maximum.SetRawY(p.GetRawY());
+        if (p.GetRawY() < minimum.get()->GetRawY() )
+            minimum.get()->SetRawY(p.GetRawY());
+        if (p.GetRawY() > maximum.get()->GetRawY() )
+            maximum.get()->SetRawY(p.GetRawY());
 
-        if (p.GetRawZ() < minimum.GetRawZ() )
-            minimum.SetRawZ(p.GetRawZ());
-        if (p.GetRawZ() > maximum.GetRawZ() )
-            maximum.SetRawZ(p.GetRawZ());
+        if (p.GetRawZ() < minimum.get()->GetRawZ() )
+            minimum.get()->SetRawZ(p.GetRawZ());
+        if (p.GetRawZ() > maximum.get()->GetRawZ() )
+            maximum.get()->SetRawZ(p.GetRawZ());
 
-        if (p.GetIntensity() < minimum.GetIntensity() )
-            minimum.SetIntensity(p.GetIntensity());
-        if (p.GetIntensity() > maximum.GetIntensity() )
-            maximum.SetIntensity(p.GetIntensity());
+        if (p.GetIntensity() < minimum.get()->GetIntensity() )
+            minimum.get()->SetIntensity(p.GetIntensity());
+        if (p.GetIntensity() > maximum.get()->GetIntensity() )
+            maximum.get()->SetIntensity(p.GetIntensity());
         
         if (bHaveTime)
         {
-            if (p.GetTime() < minimum.GetTime() )
-                minimum.SetTime(p.GetTime());
-            if (p.GetTime() > maximum.GetTime() )
-                maximum.SetTime(p.GetTime());
+            if (p.GetTime() < minimum.get()->GetTime() )
+                minimum.get()->SetTime(p.GetTime());
+            if (p.GetTime() > maximum.get()->GetTime() )
+                maximum.get()->SetTime(p.GetTime());
         }
 
 
-        if (p.GetReturnNumber() < minimum.GetReturnNumber() )
-            minimum.SetReturnNumber(p.GetReturnNumber());
-        if (p.GetReturnNumber() > maximum.GetReturnNumber() )
-            maximum.SetReturnNumber(p.GetReturnNumber());
+        if (p.GetReturnNumber() < minimum.get()->GetReturnNumber() )
+            minimum.get()->SetReturnNumber(p.GetReturnNumber());
+        if (p.GetReturnNumber() > maximum.get()->GetReturnNumber() )
+            maximum.get()->SetReturnNumber(p.GetReturnNumber());
 
-        if (p.GetNumberOfReturns() < minimum.GetNumberOfReturns() )
-            minimum.SetNumberOfReturns(p.GetNumberOfReturns());
-        if (p.GetNumberOfReturns() > maximum.GetNumberOfReturns() )
-            maximum.SetNumberOfReturns(p.GetNumberOfReturns());
+        if (p.GetNumberOfReturns() < minimum.get()->GetNumberOfReturns() )
+            minimum.get()->SetNumberOfReturns(p.GetNumberOfReturns());
+        if (p.GetNumberOfReturns() > maximum.get()->GetNumberOfReturns() )
+            maximum.get()->SetNumberOfReturns(p.GetNumberOfReturns());
 
-        if (p.GetScanDirection() < minimum.GetScanDirection() )
-            minimum.SetScanDirection(p.GetScanDirection());
-        if (p.GetScanDirection() > maximum.GetScanDirection() )
-            maximum.SetScanDirection(p.GetScanDirection());
+        if (p.GetScanDirection() < minimum.get()->GetScanDirection() )
+            minimum.get()->SetScanDirection(p.GetScanDirection());
+        if (p.GetScanDirection() > maximum.get()->GetScanDirection() )
+            maximum.get()->SetScanDirection(p.GetScanDirection());
 
 
-        if (p.GetFlightLineEdge() < minimum.GetFlightLineEdge() )
-            minimum.SetFlightLineEdge(p.GetFlightLineEdge());
-        if (p.GetFlightLineEdge() > maximum.GetFlightLineEdge() )
-            maximum.SetFlightLineEdge(p.GetFlightLineEdge());
+        if (p.GetFlightLineEdge() < minimum.get()->GetFlightLineEdge() )
+            minimum.get()->SetFlightLineEdge(p.GetFlightLineEdge());
+        if (p.GetFlightLineEdge() > maximum.get()->GetFlightLineEdge() )
+            maximum.get()->SetFlightLineEdge(p.GetFlightLineEdge());
 
-        if (p.GetScanAngleRank() < minimum.GetScanAngleRank() )
-            minimum.SetScanAngleRank(p.GetScanAngleRank());
-        if (p.GetScanAngleRank() > maximum.GetScanAngleRank() )
-            maximum.SetScanAngleRank(p.GetScanAngleRank());
+        if (p.GetScanAngleRank() < minimum.get()->GetScanAngleRank() )
+            minimum.get()->SetScanAngleRank(p.GetScanAngleRank());
+        if (p.GetScanAngleRank() > maximum.get()->GetScanAngleRank() )
+            maximum.get()->SetScanAngleRank(p.GetScanAngleRank());
 
-        if (p.GetUserData() < minimum.GetUserData() )
-            minimum.SetUserData(p.GetUserData());
-        if (p.GetUserData() > maximum.GetUserData() )
-            maximum.SetUserData(p.GetUserData());
+        if (p.GetUserData() < minimum.get()->GetUserData() )
+            minimum.get()->SetUserData(p.GetUserData());
+        if (p.GetUserData() > maximum.get()->GetUserData() )
+            maximum.get()->SetUserData(p.GetUserData());
 
-        if (p.GetPointSourceID() < minimum.GetPointSourceID() )
-            minimum.SetPointSourceID(p.GetPointSourceID());
-        if (p.GetPointSourceID() > maximum.GetPointSourceID() )
-            maximum.SetPointSourceID(p.GetPointSourceID());
+        if (p.GetPointSourceID() < minimum.get()->GetPointSourceID() )
+            minimum.get()->SetPointSourceID(p.GetPointSourceID());
+        if (p.GetPointSourceID() > maximum.get()->GetPointSourceID() )
+            maximum.get()->SetPointSourceID(p.GetPointSourceID());
 
      
         liblas::Classification const& cls = p.GetClassification();
         
-        boost::uint8_t minc = (std::min)(cls.GetClass(), minimum.GetClassification().GetClass());
-        boost::uint8_t maxc = (std::max)(cls.GetClass(), maximum.GetClassification().GetClass());
+        uint8_t minc = (std::min)(cls.GetClass(), minimum.get()->GetClassification().GetClass());
+        uint8_t maxc = (std::max)(cls.GetClass(), maximum.get()->GetClassification().GetClass());
         
         classes[cls.GetClass()]++;
         
@@ -236,21 +236,21 @@ void Summary::AddPoint(liblas::Point const& p)
         if (cls.IsKeyPoint()) keypoint++;
         if (cls.IsSynthetic()) synthetic++;
         
-        if (minc < minimum.GetClassification().GetClass())
-            minimum.SetClassification(liblas::Classification(minc));
-        if (maxc > maximum.GetClassification().GetClass())
-            maximum.SetClassification(liblas::Classification(maxc));
+        if (minc < minimum.get()->GetClassification().GetClass())
+            minimum.get()->SetClassification(liblas::Classification(minc));
+        if (maxc > maximum.get()->GetClassification().GetClass())
+            maximum.get()->SetClassification(liblas::Classification(maxc));
         
         if (bHaveColor)
         {
             liblas::Color const& color = p.GetColor();
-            liblas::Color::value_type min_red = minimum.GetColor().GetRed();
-            liblas::Color::value_type min_green = minimum.GetColor().GetGreen();
-            liblas::Color::value_type min_blue = minimum.GetColor().GetBlue();
+            liblas::Color::value_type min_red = minimum.get()->GetColor().GetRed();
+            liblas::Color::value_type min_green = minimum.get()->GetColor().GetGreen();
+            liblas::Color::value_type min_blue = minimum.get()->GetColor().GetBlue();
 
-            liblas::Color::value_type max_red = maximum.GetColor().GetRed();
-            liblas::Color::value_type max_green = maximum.GetColor().GetGreen();
-            liblas::Color::value_type max_blue = maximum.GetColor().GetBlue();
+            liblas::Color::value_type max_red = maximum.get()->GetColor().GetRed();
+            liblas::Color::value_type max_green = maximum.get()->GetColor().GetGreen();
+            liblas::Color::value_type max_blue = maximum.get()->GetColor().GetBlue();
                         
             bool bSetMinColor = false;
             if (color.GetRed() < min_red)
@@ -290,11 +290,11 @@ void Summary::AddPoint(liblas::Point const& p)
             }
 
             if (bSetMinColor)
-                minimum.SetColor(liblas::Color( min_red, 
+                minimum.get()->SetColor(liblas::Color( min_red, 
                                             min_green,
                                             min_blue));
             if (bSetMaxColor)
-                maximum.SetColor(liblas::Color( max_red, 
+                maximum.get()->SetColor(liblas::Color( max_red, 
                                             max_green, 
                                             max_blue));
         }
@@ -307,8 +307,10 @@ void Summary::AddPoint(liblas::Point const& p)
 void Summary::SetHeader(liblas::Header const& h) 
 {
     m_header = h;
-    minimum.SetHeader(&m_header);
-    maximum.SetHeader(&m_header);
+
+    minimum = boost::shared_ptr<liblas::Point>(new liblas::Point(&m_header));
+    maximum = boost::shared_ptr<liblas::Point>(new liblas::Point(&m_header));
+
     bHaveHeader = true;
 }
 
@@ -322,8 +324,8 @@ ptree Summary::GetPTree() const
 {
     ptree pt;
     
-    ptree pmin = minimum.GetPTree();
-    ptree pmax = maximum.GetPTree();
+    ptree pmin = minimum.get()->GetPTree();
+    ptree pmax = maximum.get()->GetPTree();
     
      
     pt.add_child("minimum", pmin);
@@ -350,7 +352,7 @@ ptree Summary::GetPTree() const
     
     ptree returns;
     bool have_returns = false;
-    for (boost::array<boost::uint32_t,8>::size_type i=0; i < points_by_return.size(); i++) {
+    for (boost::array<uint32_t,8>::size_type i=0; i < points_by_return.size(); i++) {
         if (i == 0) continue;
 
         if (points_by_return[i] != 0)
@@ -371,7 +373,7 @@ ptree Summary::GetPTree() const
     }
     
     ptree pulses;
-    for (boost::array<boost::uint32_t,8>::size_type i=0; i < returns_of_given_pulse.size(); i++) {
+    for (boost::array<uint32_t,8>::size_type i=0; i < returns_of_given_pulse.size(); i++) {
         if (returns_of_given_pulse[i] != 0) {
             pulses.put("id",i);
             pulses.put("count", returns_of_given_pulse[i]);
@@ -396,21 +398,21 @@ std::ostream& operator<<(std::ostream& os, liblas::Summary const& s)
     os << "  Point Inspection Summary" << std::endl;
     os << "---------------------------------------------------------" << std::endl;
 
-    if (tree.get<boost::uint32_t>("summary.points.count") == 0 )
+    if (tree.get<uint32_t>("summary.points.count") == 0 )
     {
         os << "  File has no points ...";
         return os;
     }
-    os << "  Header Point Count: " << tree.get<boost::uint32_t>("summary.header.count") << std::endl;
-    os << "  Actual Point Count: " << tree.get<boost::uint32_t>("summary.points.count") << std::endl;
+    os << "  Header Point Count: " << tree.get<uint32_t>("summary.header.count") << std::endl;
+    os << "  Actual Point Count: " << tree.get<uint32_t>("summary.points.count") << std::endl;
     
     os << std::endl;
     os << "  Minimum and Maximum Attributes (min,max)" << std::endl;
     os << "---------------------------------------------------------" << std::endl;
     
-    boost::uint32_t x_precision = 6;
-    boost::uint32_t y_precision = 6;
-    boost::uint32_t z_precision = 6;
+    uint32_t x_precision = 6;
+    uint32_t y_precision = 6;
+    uint32_t z_precision = 6;
 
     try {
         double x_scale = tree.get<double>("summary.header.scale.x");
@@ -464,52 +466,52 @@ std::ostream& operator<<(std::ostream& os, liblas::Summary const& s)
 
     os << std::endl;
     os.setf(std::ios::floatfield);
-    os << "  Return Number:\t" << tree.get<boost::uint32_t>("summary.points.minimum.returnnumber") << ", "
-       << tree.get<boost::uint32_t>("summary.points.maximum.returnnumber");
+    os << "  Return Number:\t" << tree.get<uint32_t>("summary.points.minimum.returnnumber") << ", "
+       << tree.get<uint32_t>("summary.points.maximum.returnnumber");
 
     os << std::endl;
-    os << "  Return Count:\t\t" << tree.get<boost::uint32_t>("summary.points.minimum.numberofreturns") << ", "
-       << tree.get<boost::uint32_t>("summary.points.maximum.numberofreturns");
+    os << "  Return Count:\t\t" << tree.get<uint32_t>("summary.points.minimum.numberofreturns") << ", "
+       << tree.get<uint32_t>("summary.points.maximum.numberofreturns");
 
     os << std::endl;
-    os << "  Flightline Edge:\t" << tree.get<boost::uint32_t>("summary.points.minimum.flightlineedge") << ", "
-       << tree.get<boost::uint32_t>("summary.points.maximum.flightlineedge");
+    os << "  Flightline Edge:\t" << tree.get<uint32_t>("summary.points.minimum.flightlineedge") << ", "
+       << tree.get<uint32_t>("summary.points.maximum.flightlineedge");
 
     os << std::endl;
-    os << "  Intensity:\t\t" << tree.get<boost::uint32_t>("summary.points.minimum.intensity") << ", "
-       << tree.get<boost::uint32_t>("summary.points.maximum.intensity");
+    os << "  Intensity:\t\t" << tree.get<uint32_t>("summary.points.minimum.intensity") << ", "
+       << tree.get<uint32_t>("summary.points.maximum.intensity");
 
     os << std::endl;
-    os << "  Scan Direction Flag:\t" << tree.get<boost::int32_t>("summary.points.minimum.scandirection") << ", "
-       << tree.get<boost::int32_t>("summary.points.maximum.scandirection");
+    os << "  Scan Direction Flag:\t" << tree.get<int32_t>("summary.points.minimum.scandirection") << ", "
+       << tree.get<int32_t>("summary.points.maximum.scandirection");
 
     os << std::endl;
-    os << "  Scan Angle Rank:\t" << tree.get<boost::int32_t>("summary.points.minimum.scanangle") << ", "
-       << tree.get<boost::int32_t>("summary.points.maximum.scanangle");
+    os << "  Scan Angle Rank:\t" << tree.get<int32_t>("summary.points.minimum.scanangle") << ", "
+       << tree.get<int32_t>("summary.points.maximum.scanangle");
 
     os << std::endl;
-    os << "  Classification:\t" << tree.get<boost::int32_t>("summary.points.minimum.classification.id") << ", "
-       << tree.get<boost::int32_t>("summary.points.maximum.classification.id");
+    os << "  Classification:\t" << tree.get<int32_t>("summary.points.minimum.classification.id") << ", "
+       << tree.get<int32_t>("summary.points.maximum.classification.id");
 
     os << std::endl;
-    os << "  Point Source Id:\t" << tree.get<boost::uint32_t>("summary.points.minimum.pointsourceid") << ", "
-       << tree.get<boost::uint32_t>("summary.points.maximum.pointsourceid");
+    os << "  Point Source Id:\t" << tree.get<uint32_t>("summary.points.minimum.pointsourceid") << ", "
+       << tree.get<uint32_t>("summary.points.maximum.pointsourceid");
 
     os << std::endl;
-    os << "  User Data:\t\t" << tree.get<boost::uint32_t>("summary.points.minimum.userdata") << ", "
-       << tree.get<boost::uint32_t>("summary.points.maximum.userdata");
+    os << "  User Data:\t\t" << tree.get<uint32_t>("summary.points.minimum.userdata") << ", "
+       << tree.get<uint32_t>("summary.points.maximum.userdata");
 
     os << std::endl;
     os << "  Minimum Color (RGB):\t" 
-       << tree.get<boost::uint32_t>("summary.points.minimum.color.red") << " "
-       << tree.get<boost::uint32_t>("summary.points.minimum.color.green") << " "
-       << tree.get<boost::uint32_t>("summary.points.minimum.color.blue") << " ";
+       << tree.get<uint32_t>("summary.points.minimum.color.red") << " "
+       << tree.get<uint32_t>("summary.points.minimum.color.green") << " "
+       << tree.get<uint32_t>("summary.points.minimum.color.blue") << " ";
 
     os << std::endl;
     os << "  Maximum Color (RGB):\t" 
-       << tree.get<boost::uint32_t>("summary.points.maximum.color.red") << " "
-       << tree.get<boost::uint32_t>("summary.points.maximum.color.green") << " "
-       << tree.get<boost::uint32_t>("summary.points.maximum.color.blue") << " ";
+       << tree.get<uint32_t>("summary.points.maximum.color.red") << " "
+       << tree.get<uint32_t>("summary.points.maximum.color.green") << " "
+       << tree.get<uint32_t>("summary.points.maximum.color.blue") << " ";
 
     os << std::endl;
     os << std::endl;
@@ -519,8 +521,8 @@ std::ostream& operator<<(std::ostream& os, liblas::Summary const& s)
     BOOST_FOREACH(ptree::value_type &v,
             tree.get_child("summary.points.points_by_return"))
     {
-        boost::uint32_t i = v.second.get<boost::uint32_t>("id");
-        boost::uint32_t count = v.second.get<boost::uint32_t>("count");
+        uint32_t i = v.second.get<uint32_t>("id");
+        uint32_t count = v.second.get<uint32_t>("count");
         os << "\t(" << i << ") " << count;
     }
     
@@ -532,8 +534,8 @@ std::ostream& operator<<(std::ostream& os, liblas::Summary const& s)
     BOOST_FOREACH(ptree::value_type &v,
             tree.get_child("summary.points.returns_of_given_pulse"))
     {
-        boost::uint32_t i = v.second.get<boost::uint32_t>("id");
-        boost::uint32_t count = v.second.get<boost::uint32_t>("count");
+        uint32_t i = v.second.get<uint32_t>("id");
+        uint32_t count = v.second.get<uint32_t>("count");
         os << "\t(" << i << ") " << count;
     }     
 
@@ -546,16 +548,16 @@ std::ostream& operator<<(std::ostream& os, liblas::Summary const& s)
     BOOST_FOREACH(ptree::value_type &v,
             tree.get_child("summary.points.classification"))
     {
-        boost::uint32_t i = v.second.get<boost::uint32_t>("id");
-        boost::uint32_t count = v.second.get<boost::uint32_t>("count");
+        uint32_t i = v.second.get<uint32_t>("id");
+        uint32_t count = v.second.get<uint32_t>("count");
         std::string name = v.second.get<std::string>("name");
         os << "\t" << count << " " << name << " (" << i << ") " << std::endl;;
     }
 
     os << "  -------------------------------------------------------" << std::endl;
-    os << "  \t" << tree.get<boost::uint32_t>("summary.points.encoding.withheld") << " withheld" << std::endl;
-    os << "  \t" << tree.get<boost::uint32_t>("summary.points.encoding.keypoint") << " keypoint" << std::endl;
-    os << "  \t" << tree.get<boost::uint32_t>("summary.points.encoding.synthetic") << " synthetic" << std::endl;
+    os << "  \t" << tree.get<uint32_t>("summary.points.encoding.withheld") << " withheld" << std::endl;
+    os << "  \t" << tree.get<uint32_t>("summary.points.encoding.keypoint") << " keypoint" << std::endl;
+    os << "  \t" << tree.get<uint32_t>("summary.points.encoding.synthetic") << " synthetic" << std::endl;
     os << "  -------------------------------------------------------" << std::endl;
 
     return os;
@@ -581,8 +583,8 @@ CoordinateSummary::CoordinateSummary(CoordinateSummary const& other)
     , points_by_return(other.points_by_return)
     , returns_of_given_pulse(other.returns_of_given_pulse)
     , first(other.first)
-    , minimum(other.minimum)
-    , maximum(other.maximum)
+    , minimum(boost::shared_ptr<liblas::Point>(new liblas::Point(*other.minimum)))
+    , maximum(boost::shared_ptr<liblas::Point>(new liblas::Point(*other.maximum)))
     , m_header(other.m_header)
     , bHaveHeader(other.bHaveHeader)
     , bHaveColor(other.bHaveColor)
@@ -599,8 +601,8 @@ CoordinateSummary& CoordinateSummary::operator=(CoordinateSummary const& rhs)
         first = rhs.first;
         points_by_return = rhs.points_by_return;
         returns_of_given_pulse = rhs.returns_of_given_pulse;
-        minimum = rhs.minimum;
-        maximum = rhs.maximum;
+        minimum = boost::shared_ptr<liblas::Point>(new liblas::Point(*rhs.minimum));
+        maximum = boost::shared_ptr<liblas::Point>(new liblas::Point(*rhs.maximum));
         m_header = rhs.m_header;
         bHaveHeader = rhs.bHaveHeader;
         bHaveColor = rhs.bHaveColor;
@@ -614,13 +616,13 @@ void CoordinateSummary::AddPoint(liblas::Point const& p)
         count++;
 
         if (first) {
-            minimum = p;
-            maximum = p;
-
+            minimum = boost::shared_ptr<liblas::Point>(new liblas::Point(p));
+            maximum = boost::shared_ptr<liblas::Point>(new liblas::Point(p));
+            
             if (bHaveHeader)
             {
-                maximum.SetHeader(&m_header);
-                minimum.SetHeader(&m_header);
+                maximum.get()->SetHeader(&m_header);
+                minimum.get()->SetHeader(&m_header);
             }
             
             // We only summarize the base dimensions 
@@ -646,20 +648,20 @@ void CoordinateSummary::AddPoint(liblas::Point const& p)
             first = false;
         }
         
-        if (p.GetRawX() < minimum.GetRawX() )
-            minimum.SetRawX(p.GetRawX());
-        if (p.GetRawX() > maximum.GetRawX() )
-            maximum.SetRawX(p.GetRawX());
+        if (p.GetRawX() < minimum.get()->GetRawX() )
+            minimum.get()->SetRawX(p.GetRawX());
+        if (p.GetRawX() > maximum.get()->GetRawX() )
+            maximum.get()->SetRawX(p.GetRawX());
 
-        if (p.GetRawY() < minimum.GetRawY() )
-            minimum.SetRawY(p.GetRawY());
-        if (p.GetRawY() > maximum.GetRawY() )
-            maximum.SetRawY(p.GetRawY());
+        if (p.GetRawY() < minimum.get()->GetRawY() )
+            minimum.get()->SetRawY(p.GetRawY());
+        if (p.GetRawY() > maximum.get()->GetRawY() )
+            maximum.get()->SetRawY(p.GetRawY());
 
-        if (p.GetRawZ() < minimum.GetRawZ() )
-            minimum.SetRawZ(p.GetRawZ());
-        if (p.GetRawZ() > maximum.GetRawZ() )
-            maximum.SetRawZ(p.GetRawZ());
+        if (p.GetRawZ() < minimum.get()->GetRawZ() )
+            minimum.get()->SetRawZ(p.GetRawZ());
+        if (p.GetRawZ() > maximum.get()->GetRawZ() )
+            maximum.get()->SetRawZ(p.GetRawZ());
 
         points_by_return[p.GetReturnNumber()]++;
         returns_of_given_pulse[p.GetNumberOfReturns()]++;    
@@ -668,8 +670,8 @@ void CoordinateSummary::AddPoint(liblas::Point const& p)
 void CoordinateSummary::SetHeader(liblas::Header const& h) 
 {
     m_header = h;
-    minimum.SetHeader(&m_header);
-    maximum.SetHeader(&m_header);
+    minimum = boost::shared_ptr<liblas::Point>(new liblas::Point(&m_header));
+    maximum = boost::shared_ptr<liblas::Point>(new liblas::Point(&m_header));
     bHaveHeader = true;
 }
 
@@ -677,8 +679,8 @@ ptree CoordinateSummary::GetPTree() const
 {
     ptree pt;
     
-    ptree pmin = minimum.GetPTree();
-    ptree pmax = maximum.GetPTree();
+    ptree pmin = minimum.get()->GetPTree();
+    ptree pmax = maximum.get()->GetPTree();
     
      
     pt.add_child("minimum", pmin);
@@ -686,7 +688,7 @@ ptree CoordinateSummary::GetPTree() const
 
     ptree returns;
     bool have_returns = false;
-    for (boost::array<boost::uint32_t,8>::size_type i=0; i < points_by_return.size(); i++) {
+    for (boost::array<uint32_t,8>::size_type i=0; i < points_by_return.size(); i++) {
         if (i == 0) continue;
 
         if (points_by_return[i] != 0)
@@ -707,7 +709,7 @@ ptree CoordinateSummary::GetPTree() const
     }
     
     ptree pulses;
-    for (boost::array<boost::uint32_t,8>::size_type i=0; i < returns_of_given_pulse.size(); i++) {
+    for (boost::array<uint32_t,8>::size_type i=0; i < returns_of_given_pulse.size(); i++) {
         if (returns_of_given_pulse[i] != 0) {
             pulses.put("id",i);
             pulses.put("count", returns_of_given_pulse[i]);
@@ -731,7 +733,7 @@ bool CoordinateSummary::filter(liblas::Point const& p)
 }
 
 
-boost::uint32_t GetStreamPrecision(double scale)
+uint32_t GetStreamPrecision(double scale)
 {
     double frac = 0;
     double integer = 0;
@@ -739,7 +741,7 @@ boost::uint32_t GetStreamPrecision(double scale)
     frac = std::modf(scale, &integer);
     double precision = std::fabs(std::floor(std::log10(frac)));
     
-    boost::uint32_t output = static_cast<boost::uint32_t>(precision);
+    uint32_t output = static_cast<uint32_t>(precision);
     return output;
 }
 } // namespace liblas

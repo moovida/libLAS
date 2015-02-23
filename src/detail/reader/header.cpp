@@ -95,16 +95,23 @@ void Header::ReadHeader()
     m_header->SetReserved(n2);
 
     // 4-7. Project ID
-    uint32_t d1 = 0;
-    uint16_t d2 = 0;
-    uint16_t d3 = 0;
-    uint8_t d4[8] = { 0 };
-    read_n(d1, m_ifs, sizeof(d1));
-    read_n(d2, m_ifs, sizeof(d2));
-    read_n(d3, m_ifs, sizeof(d3));
-    read_n(d4, m_ifs, sizeof(d4));
-    liblas::guid g(d1, d2, d3, d4);
-    m_header->SetProjectId(g);
+    // uint32_t d1 = 0;
+    // uint16_t d2 = 0;
+    // uint16_t d3 = 0;
+    // uint8_t d4[8] = { 0 };
+    // read_n(d1, m_ifs, sizeof(d1));
+    // read_n(d2, m_ifs, sizeof(d2));
+    // read_n(d3, m_ifs, sizeof(d3));
+    // read_n(d4, m_ifs, sizeof(d4));
+    // liblas::guid g(d1, d2, d3, d4);
+
+    uint8_t d[16] = {0};
+    read_n(d, m_ifs, 16);
+    boost::uuids::uuid u;
+    for (int i=0; i<16; i++)
+        u.data[i] = d[i];
+    
+    m_header->SetProjectId(u);
 
     // 8. Version major
     read_n(n1, m_ifs, sizeof(n1));
@@ -215,13 +222,7 @@ void Header::ReadHeader()
     
     // 18. Point Data Record Length
     read_n(n2, m_ifs, sizeof(n2));
-    // FIXME: We currently only use the DataFormatId, this needs to 
-    // adjust the schema based on the difference between the DataRecordLength
-    // and the base size of the pointformat.  If we have an XML schema in the 
-    // form of a VLR in the file, we'll use that to apportion the liblas::Schema.
-    // Otherwise, all bytes after the liblas::Schema::GetBaseByteSize will be 
-    // a simple uninterpreted byte field. 
-    // m_header->SetDataRecordLength(n2);
+    uint16_t record_length(n2);
 
     // 19. Number of point records
     read_n(n4, m_ifs, sizeof(n4));
@@ -270,7 +271,7 @@ void Header::ReadHeader()
     if (m_header->GetRecordsCount() > 0)
         ReadVLRs();
 
-    boost::uint32_t pad = m_header->GetDataOffset() - (m_header->GetHeaderSize() + m_header->GetVLRBlockSize());
+    uint32_t pad = m_header->GetDataOffset() - (m_header->GetHeaderSize() + m_header->GetVLRBlockSize());
     m_header->SetHeaderPadding(pad);
 
     // If we're eof, we need to reset the state
@@ -279,6 +280,21 @@ void Header::ReadHeader()
 
     // Seek to the data offset so we can start reading points
     m_ifs.seekg(m_header->GetDataOffset());
+
+    if (m_header->GetDataRecordLength() != record_length) // we have extra_bytes
+    {
+        // FIXME: We only dump the bytes into an "extra" dimension for 
+        // now and there's now way to get to them. For LAS 1.4 files these 
+        // could be interpreted using the VLR, but it isn't done at this time.
+        
+        Dimension extra("extra", (record_length - m_header->GetDataRecordLength())*8);
+        extra.SetDescription("Extra bytes");
+        extra.IsRequired(false); extra.IsActive(true); extra.IsInteger(false); extra.IsNumeric(true);
+        
+        Schema schema = m_header->GetSchema();
+        schema.AddDimension(extra);
+        m_header->SetSchema(schema);
+    } 
 
 }
 
@@ -329,7 +345,7 @@ bool Header::HasLAS10PadSignature()
 
 void Header::ReadVLRs()
 {
-    VLRHeader vlrh = { 0 };
+    VLRHeader vlrh;
 
     if (m_ifs.eof()) {
         // if we hit the end of the file already, it's because 

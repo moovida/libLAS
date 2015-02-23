@@ -118,10 +118,18 @@ namespace tut
 # pragma warning(disable: 4305) //  truncation from 'int' to 'boost::uint16_t'
 # pragma warning(disable: 4309) // conditional expression is constant.
 #endif
+
+#ifndef _MSC_VER
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wconstant-conversion"
+#endif
         // Unsigned overflow
         // Likely compiler warning: truncation from int to boost::uint16_t
         h1.SetFileSourceId(id2 + 1);
         ensure_equals(h1.GetFileSourceId(), overflowed);
+#ifndef _MSC_VER
+#pragma clang diagnostic pop
+#endif
 
 #ifdef _MSC_VER
 # pragma warning(push)
@@ -145,12 +153,12 @@ namespace tut
     void to::test<7>()
     {
         std::string strid("030B4A82-1B7C-11CF-9D53-00AA003C9CB6");
-        liblas::guid id(strid.c_str());
+        boost::uuids::uuid id = boost::uuids::string_generator()(strid);        
 
         liblas::Header h;
         h.SetProjectId(id);
         
-        ensure_not(h.GetProjectId().is_null());
+        ensure_not(h.GetProjectId() == boost::uuids::nil_uuid());
         ensure_equals(h.GetProjectId(), id);
     }
 

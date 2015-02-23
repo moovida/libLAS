@@ -100,35 +100,14 @@ void Header::write()
     // If we are in append mode, we are not touching *any* VLRs. 
     if (bAppendMode) 
     {
-        // We're opened in append mode
-        
-        if (!m_header.Compressed())
-        {
-            ios::off_type points = end - static_cast<ios::off_type>(m_header.GetDataOffset());
-            ios::off_type count = points / static_cast<ios::off_type>(m_header.GetDataRecordLength());
-        
-            if (points < 0) {
-                std::ostringstream oss;
-                oss << "The header's data offset, " << m_header.GetDataOffset() 
-                    <<", is much larger than the size of the file, " << end
-                    <<", and something is amiss.  Did you use the right header"
-                    <<" offset value?";
-                throw std::runtime_error(oss.str());
-            }
-            
-            m_pointCount = static_cast<uint32_t>(count);
-
-        } else {
-            m_pointCount = m_header.GetPointRecordsCount();
-        }
+        // Believe the header
+        m_pointCount = m_header.GetPointRecordsCount();
 
         // Position to the beginning of the file to start writing the header
         m_ofs.seekp(0, ios::beg);
-
     } 
     else 
     {
-        
         // Rewrite the georeference VLR entries if they exist
         m_header.DeleteVLRs("liblas", 2112);
         m_header.SetGeoreference();
@@ -216,16 +195,21 @@ void Header::write()
     } 
 
     // 3-6. GUID data
-    uint32_t d1 = 0;
-    uint16_t d2 = 0;
-    uint16_t d3 = 0;
-    uint8_t d4[8] = { 0 };
-    liblas::guid g = m_header.GetProjectId();
-    g.output_data(d1, d2, d3, d4);
-    detail::write_n(m_ofs, d1, sizeof(d1));
-    detail::write_n(m_ofs, d2, sizeof(d2));
-    detail::write_n(m_ofs, d3, sizeof(d3));
-    detail::write_n(m_ofs, d4, sizeof(d4));
+    boost::uint8_t d[16];
+    boost::uuids::uuid u = m_header.GetProjectId();
+
+    d[0] = u.data[3];
+    d[1] = u.data[2];
+    d[2] = u.data[1];
+    d[3] = u.data[0];
+    d[4] = u.data[5];
+    d[5] = u.data[4];
+    d[6] = u.data[7];
+    d[7] = u.data[6];
+    for (int i=8; i<16; i++)
+        d[i] = u.data[i];
+    
+    detail::write_n(m_ofs, d, 16);
     
     // 7. Version major
     n1 = m_header.GetVersionMajor();

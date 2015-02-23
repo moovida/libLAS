@@ -68,8 +68,8 @@ ZipReaderImpl::ZipReaderImpl(std::istream& ifs)
     , m_size(0)
     , m_current(0)
     , m_header_reader(new reader::Header(m_ifs))
-    , m_header(HeaderPtr())
-    , m_point(PointPtr(new liblas::Point()))
+    , m_header(HeaderPtr(new liblas::Header(DefaultHeader::get())))
+    , m_point(PointPtr(new liblas::Point(m_header.get())))
     , m_filters(0)
     , m_transforms(0)
     , bNeedHeaderCheck(false)
@@ -199,12 +199,17 @@ void ZipReaderImpl::ReadIdiom()
     if (!ok)
     {
         std::ostringstream oss;
-        oss << "Error reading compressed point data: " << std::string(m_unzipper->get_error());
+        const char* errMsg = m_unzipper->get_error();
+        oss << "Error reading compressed point data: " ;
+        if (errMsg)
+            oss << "'" << m_unzipper->get_error() <<"'";
+        else
+            oss << "no message from LASzip library";
         throw liblas_error(oss.str());
     }
 
     {
-        std::vector<boost::uint8_t>& data = m_point->GetData();
+        std::vector<uint8_t>& data = m_point->GetData();
 
         unsigned int size = m_zipPoint->m_lz_point_size;
         assert(size == data.size());

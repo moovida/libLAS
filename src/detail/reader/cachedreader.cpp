@@ -86,13 +86,13 @@ void CachedReaderImpl::ReadHeader()
     // 
     // // Mark all positions as uncached and build up the mask
     // // to the size of the number of points in the file
-    // boost::uint8_t const uncached_mask = 0;
+    // uint8_t const uncached_mask = 0;
     // cache_mask_type(hptr->GetPointRecordsCount(), uncached_mask).swap(m_mask);
     
     m_header = hptr;
 }
 
-void CachedReaderImpl::CacheData(boost::uint32_t position) 
+void CachedReaderImpl::CacheData(uint32_t position) 
 {
     cache_mask_type::size_type old_cache_start_position = m_cache_start_position;
     m_cache_start_position = position;
@@ -120,7 +120,7 @@ void CachedReaderImpl::CacheData(boost::uint32_t position)
         try {
             m_mask[m_current] = 1;
             ReadNextUncachedPoint();
-            m_cache[i] = ReaderImpl::GetPoint();
+            m_cache[i] = new liblas::Point(ReaderImpl::GetPoint());
         } catch (std::out_of_range&) {
             // cached to the end
             break;
@@ -153,7 +153,7 @@ void CachedReaderImpl::ReadNextUncachedPoint()
 
 }
 
-void CachedReaderImpl::ReadCachedPoint(boost::uint32_t position) {
+void CachedReaderImpl::ReadCachedPoint(uint32_t position) {
     
     int32_t cache_position = position - m_cache_start_position ;
 
@@ -174,14 +174,14 @@ void CachedReaderImpl::ReadCachedPoint(boost::uint32_t position) {
     
         // Mark all positions as uncached and build up the mask
         // to the size of the number of points in the file
-        boost::uint8_t const uncached_mask = 0;
+        uint8_t const uncached_mask = 0;
         cache_mask_type(m_header->GetPointRecordsCount(), uncached_mask).swap(m_mask);
  
         m_cache_initialized = true;
     }
     if (m_mask[position] == 1) {
         m_cache_read_position = position;
-        *m_point =  m_cache[cache_position];
+        *m_point =  *m_cache[cache_position];
         return;
     } else {
 
@@ -208,7 +208,7 @@ void CachedReaderImpl::ReadCachedPoint(boost::uint32_t position) {
                     << " greater than cache size: " << m_cache.size() ;
                 throw std::runtime_error(msg.str());
             }
-            *m_point = m_cache[cache_position];
+            *m_point = *m_cache[cache_position];
             return;
         } else {
             std::ostringstream msg;

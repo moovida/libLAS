@@ -40,7 +40,6 @@
  * OF SUCH DAMAGE.
  ****************************************************************************/
 
-#include <liblas/guid.hpp>
 #include <liblas/header.hpp>
 #include <liblas/spatialreference.hpp>
 #include <liblas/schema.hpp>
@@ -55,6 +54,7 @@
 // boost
 #include <boost/cstdint.hpp>
 #include <boost/lambda/lambda.hpp>
+
 //std
 #include <algorithm>
 #include <fstream>
@@ -71,7 +71,7 @@ namespace liblas {
 
 char const* const Header::FileSignature = "LASF";
 char const* const Header::SystemIdentifier = "libLAS";
-char const* const Header::SoftwareIdentifier = "libLAS 1.7.0";
+char const* const Header::SoftwareIdentifier = "libLAS 1.8.0";
 
 
 Header::Header() : m_schema(ePointFormat3)
@@ -82,9 +82,7 @@ Header::Header() : m_schema(ePointFormat3)
 Header::Header(Header const& other) :
     m_sourceId(other.m_sourceId),
     m_reserved(other.m_reserved),
-    m_projectId1(other.m_projectId1),
-    m_projectId2(other.m_projectId2),
-    m_projectId3(other.m_projectId3),
+    m_projectGuid(other.m_projectGuid),
     m_versionMajor(other.m_versionMajor),
     m_versionMinor(other.m_versionMinor),
     m_createDOY(other.m_createDOY),
@@ -107,8 +105,6 @@ Header::Header(Header const& other) :
 
     p = std::memcpy(m_signature, other.m_signature, eFileSignatureSize);
     assert(p == m_signature);
-    p = std::memcpy(m_projectId4, other.m_projectId4, eProjectId4Size); 
-    assert(p == m_projectId4);
     p = std::memcpy(m_systemId, other.m_systemId, eSystemIdSize);
     assert(p == m_systemId);
     p = std::memcpy(m_softwareId, other.m_softwareId, eSoftwareIdSize);
@@ -129,11 +125,7 @@ Header& Header::operator=(Header const& rhs)
         assert(p == m_signature);
         m_sourceId = rhs.m_sourceId;
         m_reserved = rhs.m_reserved;
-        m_projectId1 = rhs.m_projectId1;
-        m_projectId2 = rhs.m_projectId2;
-        m_projectId3 = rhs.m_projectId3;
-        p = std::memcpy(m_projectId4, rhs.m_projectId4, eProjectId4Size); 
-        assert(p == m_projectId4);
+        m_projectGuid = rhs.m_projectGuid;
         m_versionMajor = rhs.m_versionMajor;
         m_versionMinor = rhs.m_versionMinor;
         p = std::memcpy(m_systemId, rhs.m_systemId, eSystemIdSize);
@@ -173,10 +165,7 @@ bool Header::operator==(Header const& other) const
     if (m_signature != other.m_signature) return false;
     if (m_sourceId != other.m_sourceId) return false;
     if (m_reserved != other.m_reserved) return false;
-    if (m_projectId1 != other.m_projectId1) return false;
-    if (m_projectId2 != other.m_projectId2) return false;
-    if (m_projectId3 != other.m_projectId3) return false;
-    if (m_projectId4 != other.m_projectId4) return false;
+    if (m_projectGuid != other.m_projectGuid) return false;
     if (m_versionMajor != other.m_versionMajor) return false;
     if (m_versionMinor != other.m_versionMinor) return false;
     if (m_systemId != other.m_systemId) return false;
@@ -233,14 +222,14 @@ void Header::SetReserved(uint16_t v)
     m_reserved = v;
 }
 
-liblas::guid Header::GetProjectId() const
+boost::uuids::uuid Header::GetProjectId() const
 {
-    return liblas::guid(m_projectId1, m_projectId2, m_projectId3, m_projectId4);
+    return m_projectGuid;
 }
 
-void Header::SetProjectId(guid const& v)
+void Header::SetProjectId(boost::uuids::uuid const& v)
 {
-    v.output_data(m_projectId1, m_projectId2, m_projectId3, m_projectId4);
+    m_projectGuid = v;
 }
 
 uint8_t Header::GetVersionMajor() const
@@ -409,7 +398,7 @@ void Header::SetDataFormatId(liblas::PointFormatName v)
 uint16_t Header::GetDataRecordLength() const
 {
     // No matter what the schema says, this must be a a short in size.
-    return static_cast<boost::uint16_t>(m_schema.GetByteSize());
+    return static_cast<uint16_t>(m_schema.GetByteSize());
 }
 
 uint32_t Header::GetPointRecordsCount() const
@@ -580,10 +569,9 @@ void Header::Init()
     }
 
     m_headerSize = eHeaderSize;
-
-    m_sourceId = m_reserved = m_projectId2 = m_projectId3 = uint16_t();
-    m_projectId1 = uint32_t();
-    std::memset(m_projectId4, 0, sizeof(m_projectId4)); 
+    
+    m_projectGuid = boost::uuids::nil_uuid();
+    m_sourceId = m_reserved = uint16_t();
 
     m_dataOffset = eHeaderSize; // excluding 2 bytes of Point Data Start Signature
     m_headerPadding = 0;
@@ -606,7 +594,7 @@ void Header::Init()
     m_isCompressed = false;
 }
 
-bool SameVLRs(std::string const& name, boost::uint16_t id, liblas::VariableRecord const& record)
+bool SameVLRs(std::string const& name, uint16_t id, liblas::VariableRecord const& record)
 {
     if (record.GetUserId(false) == name) {
         if (record.GetRecordId() == id) {
@@ -617,7 +605,7 @@ bool SameVLRs(std::string const& name, boost::uint16_t id, liblas::VariableRecor
 }
 
 
-void Header::DeleteVLRs(std::string const& name, boost::uint16_t id)
+void Header::DeleteVLRs(std::string const& name, uint16_t id)
 {
 
     m_vlrs.erase( std::remove_if( m_vlrs.begin(), 
@@ -713,6 +701,7 @@ liblas::property_tree::ptree Header::GetPTree( ) const
     
     pt.put("filesignature", GetFileSignature());
     pt.put("projectdid", GetProjectId());
+
     pt.put("systemid", GetSystemId());
     pt.put("softwareid", GetSoftwareId());
     
@@ -763,7 +752,7 @@ liblas::property_tree::ptree Header::GetPTree( ) const
 
     ptree return_count;
     liblas::Header::RecordsByReturnArray returns = GetPointRecordsByReturnCount();
-    for (boost::uint32_t i=0; i< 5; i++){
+    for (uint32_t i=0; i< 5; i++){
         ptree r;
         r.put("id", i);
         r.put("count", returns[i]);
@@ -788,7 +777,7 @@ liblas::property_tree::ptree Header::GetPTree( ) const
     pt.put("maximum.z", GetMaxZ());
 
     
-    for (boost::uint32_t i=0; i< GetRecordsCount(); i++) {
+    for (uint32_t i=0; i< GetRecordsCount(); i++) {
         pt.add_child("vlrs.vlr", GetVLR(i).GetPTree());
     }    
 
@@ -811,15 +800,15 @@ void Header::to_rst(std::ostream& os) const
     os << std::endl;
 
     os << "  Version:                     " << tree.get<std::string>("version") << std::endl;
-    os << "  Source ID:                   " << tree.get<boost::uint32_t>("filesourceid") << std::endl;
+    os << "  Source ID:                   " << tree.get<uint32_t>("filesourceid") << std::endl;
     os << "  Reserved:                    " << tree.get<std::string>("reserved") << std::endl;
     os << "  Project ID/GUID:             '" << tree.get<std::string>("projectdid") << "'" << std::endl;
     os << "  System ID:                   '" << tree.get<std::string>("systemid") << "'" << std::endl;
     os << "  Generating Software:         '" << tree.get<std::string>("softwareid") << "'" << std::endl;
     os << "  File Creation Day/Year:      " << tree.get<std::string>("date") << std::endl;
-    os << "  Header Byte Size             " << tree.get<boost::uint32_t>("size") << std::endl;
-    os << "  Data Offset:                 " << tree.get<boost::uint32_t>("dataoffset") << std::endl;
-    os << "  Header Padding:              " << tree.get<boost::uint32_t>("header_padding") << std::endl;
+    os << "  Header Byte Size             " << tree.get<uint32_t>("size") << std::endl;
+    os << "  Data Offset:                 " << tree.get<uint32_t>("dataoffset") << std::endl;
+    os << "  Header Padding:              " << tree.get<uint32_t>("header_padding") << std::endl;
 
     os << "  Number Var. Length Records:  ";
     try {
@@ -831,8 +820,8 @@ void Header::to_rst(std::ostream& os) const
     }
     os << std::endl;
 
-    os << "  Point Data Format:           " << tree.get<boost::uint32_t>("dataformatid") << std::endl;
-    os << "  Number of Point Records:     " << tree.get<boost::uint32_t>("count") << std::endl;
+    os << "  Point Data Format:           " << tree.get<uint32_t>("dataformatid") << std::endl;
+    os << "  Number of Point Records:     " << tree.get<uint32_t>("count") << std::endl;
     os << "  Compressed:                  " << (tree.get<bool>("compressed")?"True":"False") << std::endl;
     if (tree.get<bool>("compressed"))
     {
@@ -843,7 +832,7 @@ void Header::to_rst(std::ostream& os) const
     BOOST_FOREACH(ptree::value_type &v,
           tree.get_child("returns"))
     {
-          os << v.second.get<boost::uint32_t>("count")<< " ";
+          os << v.second.get<uint32_t>("count")<< " ";
 
     }      
     os << std::endl;
@@ -853,9 +842,9 @@ void Header::to_rst(std::ostream& os) const
     double y_scale = tree.get<double>("scale.y");
     double z_scale = tree.get<double>("scale.z");
 
-    boost::uint32_t x_precision = 6;
-    boost::uint32_t y_precision = 6;
-    boost::uint32_t z_precision = 6;
+    uint32_t x_precision = 6;
+    uint32_t y_precision = 6;
+    uint32_t z_precision = 6;
     
     x_precision = 14;//GetStreamPrecision(x_scale);
     y_precision = 14; //GetStreamPrecision(y_scale);

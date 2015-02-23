@@ -10,11 +10,13 @@ project(libLAS)
 
 
 SET(LIBLAS_VERSION_MAJOR "1")
-SET(LIBLAS_VERSION_MINOR "7")
+SET(LIBLAS_VERSION_MINOR "8")
 SET(LIBLAS_VERSION_PATCH "0")
 set(VERSION "${LIBLAS_VERSION_MAJOR}.${LIBLAS_VERSION_MINOR}.${LIBLAS_VERSION_PATCH}")
-SET(LIBLAS_LIB_SOVERSION "2.2.0")
-SET(LIBLAS_C_LIB_SOVERSION "2.2.0")
+SET(LIBLAS_LIB_VERSION "2.3.0")
+SET(LIBLAS_LIB_SOVERSION "3")
+SET(LIBLAS_C_LIB_VERSION "2.3.0")
+SET(LIBLAS_C_LIB_SOVERSION "3")
 SET(OSGEO4W_UPSTREAM_RELEASE "1")
 
 if(WIN32)
@@ -23,22 +25,22 @@ if(WIN32)
 
   # Name of C library
   set(LIBLAS_C_LIB_NAME liblas_c)
-  
+
   # Name of Chipper library
-  set(LASCHIP_LIB_NAME liblas_chipper )  
-  
+  set(LASCHIP_LIB_NAME liblas_chipper )
+
   # Name of Kernel libray
   set(LASKERNEL_LIB_NAME liblas_kernel )
-  
+
 else()
   # Name of C++ library
   set(LIBLAS_LIB_NAME las)
-  
+
   # Name of C library
   set(LIBLAS_C_LIB_NAME las_c)
 
   # Name of Chipper library
-  set(LASCHIP_LIB_NAME las_chipper )  
+  set(LASCHIP_LIB_NAME las_chipper )
 
   # Name of Kernel libray
   set(LASKERNEL_LIB_NAME las_kernel )
@@ -52,6 +54,7 @@ set(CMAKE_INCLUDE_DIRECTORIES_PROJECT_BEFORE ON)
 # Choose package components
 set(WITH_UTILITIES TRUE CACHE BOOL "Choose if libLAS utilities should be built")
 set(WITH_TESTS TRUE CACHE BOOL "Choose if libLAS unit tests should be built")
+set(BUILD_OSGEO4W TRUE CACHE BOOL "Should OSGeo4W package for Windows be built")
 
 # Choose to use pkg-config or not
 set(WITH_PKGCONFIG FALSE CACHE BOOL
@@ -74,23 +77,30 @@ set(CMAKE_COLOR_MAKEFILE ON)
 mark_as_advanced(CMAKE_VERBOSE_MAKEFILE)
 
 # Path to additional CMake modules
-set(CMAKE_MODULE_PATH ${libLAS_SOURCE_DIR}/cmake/modules ${CMAKE_MODULE_PATH})
+set(CMAKE_MODULE_PATH "${libLAS_SOURCE_DIR}/cmake/modules" ${CMAKE_MODULE_PATH})
+if (CMAKE_MAJOR_VERSION GREATER 2)
+    cmake_policy(SET CMP0042 OLD)
+endif()
+
+if (CMAKE_SYSTEM_NAME MATCHES "Linux")
+set(CMAKE_SKIP_RPATH ON)
+endif()
 
 ###############################################################################
 # General build settings
 
-# Default to debug mode until final 1.6.0 release 
+# Default to debug mode until final 1.6.0 release
 if(NOT MSVC_IDE)
   if(NOT CMAKE_BUILD_TYPE)
 
-  set(CMAKE_BUILD_TYPE Release CACHE STRING 
+  set(CMAKE_BUILD_TYPE Release CACHE STRING
     "Choose the type of build, options are: None Debug Release RelWithDebInfo MinSizeRel" FORCE)
   endif()
     message(STATUS "Setting libLAS build type - ${CMAKE_BUILD_TYPE}")
 endif()
 
 # TODO: Still testing the output paths --mloskot
-set(LIBLAS_BUILD_OUTPUT_DIRECTORY ${PROJECT_BINARY_DIR}/bin/${CMAKE_BUILD_TYPE})
+set(LIBLAS_BUILD_OUTPUT_DIRECTORY "${PROJECT_BINARY_DIR}/bin/${CMAKE_BUILD_TYPE}")
 
 # Output directory in which to build RUNTIME target files.
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${LIBLAS_BUILD_OUTPUT_DIRECTORY})
@@ -99,7 +109,7 @@ set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${LIBLAS_BUILD_OUTPUT_DIRECTORY})
 set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${LIBLAS_BUILD_OUTPUT_DIRECTORY})
 
 # Output directory in which to build ARCHIVE target files.
-set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${LIBLAS_BUILD_OUTPUT_DIRECTORY}) 
+set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${LIBLAS_BUILD_OUTPUT_DIRECTORY})
 
 file(READ "doc/index.txt" README )
 file(WRITE "README.txt" "${README}")
@@ -109,13 +119,13 @@ file(WRITE "README.txt" "${README}")
 
 if(WIN32)
   if (MSVC)
-    if (MSVC80 OR MSVC90 OR MSVC10)
+    if (MSVC80 OR MSVC90 OR MSVC10 OR MSVC11 OR MSVC12)
       add_definitions(-D_CRT_SECURE_NO_DEPRECATE)
       add_definitions(-D_CRT_SECURE_NO_WARNINGS)
       add_definitions(-D_CRT_NONSTDC_NO_WARNING)
       add_definitions(-D_SCL_SECURE_NO_WARNINGS)
     endif()
-    
+
     if(CMAKE_CXX_FLAGS MATCHES "/W[0-4]")
       string(REGEX REPLACE "/W[0-4]" "/W4"
         CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS}")
@@ -132,9 +142,9 @@ if(WIN32)
     mark_as_advanced(VCPROJ_USER_ENVIRONMENT_PATH_DEBUG)
 
   endif()
-  
-  set(CMAKE_INCLUDE_PATH c:/osgeo4w/include;$ENV{CMAKE_INCLUDE_PATH})
-  set(CMAKE_LIBRARY_PATH c:/osgeo4w/lib;$ENV{CMAKE_LIBRARY_PATH})
+
+  set(CMAKE_INCLUDE_PATH c:/osgeo4w64/include;$ENV{CMAKE_INCLUDE_PATH})
+  set(CMAKE_LIBRARY_PATH c:/osgeo4w64/lib;$ENV{CMAKE_LIBRARY_PATH})
 else()
 
   # Recommended C++ compilation flags
@@ -144,13 +154,13 @@ else()
   # enum) 2012-09-05.  Remove -Wcast-qual -Wfloat-equal
   # -Wredundant-decls to suppress the multitude of warning messages.
   set(LIBLAS_COMMON_CXX_FLAGS
-	"-ansi -Wall -Wpointer-arith -Wcast-align -Wno-long-long")
+	" -Wextra -Wall -Wno-unused-parameter -Wno-unused-variable -Wpointer-arith -Wcast-align -Wcast-qual -Wfloat-equal -Wredundant-decls -Wno-long-long")
 
   if(CMAKE_COMPILER_IS_GNUCC OR CMAKE_COMPILER_IS_GNUCXX)
 
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${LIBLAS_COMMON_CXX_FLAGS}")
     if (CMAKE_COMPILER_IS_GNUCXX)
-      set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++98")
+      set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++98 -ansi")
     endif()
 
   elseif("${CMAKE_CXX_COMPILER_ID}" MATCHES "Clang" OR "${CMAKE_CXX_COMPILER}" MATCHES "clang")
@@ -173,9 +183,9 @@ endif(APPLE)
 # Boost C++ Libraries support - required
 message(STATUS "Searching for Boost 1.38+ - done")
 
-# Default to using static, multithreaded libraries for 
-# linking under MSVC.  This is because we show users how to 
-# use boostpro.com installer and install those options when linking 
+# Default to using static, multithreaded libraries for
+# linking under MSVC.  This is because we show users how to
+# use boostpro.com installer and install those options when linking
 # on windows in the compilation documentation.
 if(WIN32)
   if (MSVC)
@@ -184,17 +194,17 @@ if(WIN32)
   endif(MSVC)
 endif(WIN32)
 
-# NOTE: Add iostreams to COMPONENTS list to enable bigfile_boost_iostreams_test
-find_package(Boost 1.38 COMPONENTS program_options thread system REQUIRED)
+find_package(Threads)
+find_package(Boost 1.38 COMPONENTS program_options thread system iostreams filesystem REQUIRED)
 
 if(Boost_FOUND AND Boost_PROGRAM_OPTIONS_FOUND)
   include_directories(${Boost_INCLUDE_DIRS})
 endif()
 
 # make these available for the user to set.
-mark_as_advanced(CLEAR Boost_INCLUDE_DIR) 
-mark_as_advanced(CLEAR Boost_LIBRARY_DIRS) 
-link_directories(${Boost_LIBRARY_DIRS}) 
+mark_as_advanced(CLEAR Boost_INCLUDE_DIR)
+mark_as_advanced(CLEAR Boost_LIBRARY_DIRS)
+link_directories(${Boost_LIBRARY_DIRS})
 
 # LASZIP support - optional, default=ON
 set(WITH_LASZIP FALSE CACHE BOOL "Choose if LASzip support should be built")
@@ -202,73 +212,90 @@ set(WITH_STATIC_LASZIP FALSE CACHE BOOL "Choose of LASzip should be statically l
 mark_as_advanced(WITH_STATIC_LASZIP)
 
 if (WITH_LASZIP)
-    find_package(LASzip 2.0.1)
-
-    if(LASZIP_FOUND)    
-        set(CMAKE_REQUIRED_LIBRARIES ${LASZIP_LIBRARY})
-        include_directories(${LASZIP_INCLUDE_DIR})
-        add_definitions(-DHAVE_LASZIP=1)
-        mark_as_advanced(CLEAR LASZIP_INCLUDE_DIR) 
-        mark_as_advanced(CLEAR LASZIP_LIBRARY) 
-        mark_as_advanced(CLEAR LASZIP_VERSION) 
-    endif()
+  find_package (LASzip 2.0.1 QUIET NO_MODULE)
+  if (NOT LASZIP_FOUND)
+    find_package (LASzip 2.0.1)
+  endif ()
+endif ()
+if(LASZIP_FOUND)
+    include_directories(${LASZIP_INCLUDE_DIR})
+    add_definitions(-DHAVE_LASZIP=1)
+    mark_as_advanced(CLEAR LASZIP_INCLUDE_DIR)
+    mark_as_advanced(CLEAR LASZIP_LIBRARY)
+    mark_as_advanced(CLEAR LASZIP_VERSION)
+    set(WITH_LASZIP TRUE)
+else()
+    set(LASZIP_LIBRARY "")
+    set(LASZIP_INCLUDE_DIR "")
 endif()
 
 # GDAL/OGR support - optional, default=OFF
 set(WITH_GDAL FALSE CACHE BOOL "Choose if GDAL support should be built")
 
-if(WITH_GDAL)
-
-  find_package(GDAL 1.7.0)
+if (WITH_GDAL)
+  find_package (GDAL 1.7.0 NO_MODULE QUIET)
+  if (NOT GDAL_FOUND)
+    find_package (GDAL 1.7.0)
+  endif ()
+endif ()
+if (GDAL_FOUND)
   include_directories(${GDAL_INCLUDE_DIR})
   add_definitions(-DHAVE_GDAL=1)
-
-  mark_as_advanced(CLEAR GDAL_INCLUDE_DIR) 
-  mark_as_advanced(CLEAR GDAL_LIBRARY) 
-
+  set(WITH_GDAL TRUE)
+  mark_as_advanced(CLEAR GDAL_INCLUDE_DIR)
+  mark_as_advanced(CLEAR GDAL_LIBRARY)
+  find_package (PROJ4 NO_MODULE QUIET)
+  if (NOT PROJ4_FOUND)
+    find_package (PROJ4)
+  endif ()
 endif()
 
 # GeoTIFF support - optional, default=OFF
 set(WITH_GEOTIFF FALSE CACHE BOOL "Choose if GeoTIFF support should be built")
 
-if(WITH_GEOTIFF)
-  find_package(GeoTIFF 1.2.5)
-
-  if(GEOTIFF_FOUND)
-    
+if (WITH_GEOTIFF)
+  find_package (GeoTIFF 1.3.0 QUIET NO_MODULE)
+  if (NOT GEOTIFF_FOUND)
+    find_package (GeoTIFF 1.3.0)
+  endif ()
+endif ()
+if(GEOTIFF_FOUND)
+    set(WITH_GEOTIFF TRUE)
     # Confirm required API is available
-    include(CheckFunctionExists) 
-    set(CMAKE_REQUIRED_LIBRARIES ${GEOTIFF_LIBRARY})
-    #       check_function_exists(ST_Create HAVE_ST_CREATE)
-    
-    #        if(NOT HAVE_ST_CREATE)
-    #            set(GEOTIFF_FOUND) # Reset to NOT found for GeoTIFF
-    #            message(FATAL_ERROR "GeoTIFF support requires libgeotiff 1.2.5 or newer.")
-    #        else()
+    include(CheckFunctionExists)
     include_directories(${GEOTIFF_INCLUDE_DIR})
     add_definitions(-DHAVE_LIBGEOTIFF=1)
-    #        endif()
-  endif()
 
-  # Determine libTIFF availability, required
-  if (GEOTIFF_FOUND)
-
-    mark_as_advanced(CLEAR TIFF_INCLUDE_DIR) 
-    mark_as_advanced(CLEAR TIFF_LIBRARY) 
+    mark_as_advanced(CLEAR TIFF_INCLUDE_DIR)
+    mark_as_advanced(CLEAR TIFF_LIBRARY)
     if (WIN32)
         set(TIFF_NAMES libtiff_i)
     endif(WIN32)
-    find_package(TIFF) 
+    find_package (TIFF QUIET NO_MODULE)
+    if (NOT TIFF_FOUND)
+      find_package(TIFF)
+    endif ()
     if (TIFF_FOUND)
       include_directories(${TIFF_INCLUDE_DIR})
     endif()
-  endif()
+  find_package (JPEG NO_MODULE QUIET)
+  if (NOT JPEG_FOUND)
+    find_package (JPEG)
+  endif ()
+  find_package (ZLIB NO_MODULE QUIET)
+  if (NOT ZLIB_FOUND)
+    find_package (ZLIB)
+  endif ()
+else()
+    set(GEOTIFF_LIBRARY "")
+    set(GEOTIFF_INCLUDE_DIR "")
 endif()
+
 
 if(WITH_GDAL)
   if (NOT GEOTIFF_FOUND)
     message(FATAL_ERROR
-      "GDAL support requires GeoTIFF library which was not selected")
+      "GDAL support requires GeoTIFF library which was not found")
   endif()
 endif()
 
@@ -366,26 +393,34 @@ SET(CPACK_PACKAGE_VERSION_MAJOR ${LIBLAS_VERSION_MAJOR})
 SET(CPACK_PACKAGE_VERSION_MINOR ${LIBLAS_VERSION_MINOR})
 SET(CPACK_PACKAGE_VERSION_PATCH ${LIBLAS_VERSION_MINOR})
 
-SET(CPACK_SOURCE_GENERATOR "TGZ;ZIP;TBZ2")
+SET(CPACK_SOURCE_GENERATOR "TBZ2")
 SET(CPACK_CMAKE_GENERATOR "Unix Makefiles")
 
 
 
 set(CPACK_SOURCE_PACKAGE_FILE_NAME
   "${CMAKE_PROJECT_NAME}-${VERSION}")
-  
+
 list(APPEND CPACK_SOURCE_IGNORE_FILES "/test/data/TO_core_last_zoom.las")
 list(APPEND CPACK_SOURCE_IGNORE_FILES "_CPack_Packages")
 list(APPEND CPACK_SOURCE_IGNORE_FILES ".gz")
 list(APPEND CPACK_SOURCE_IGNORE_FILES ".bz2")
-list(APPEND CPACK_SOURCE_IGNORE_FILES ".hg")
+list(APPEND CPACK_SOURCE_IGNORE_FILES ".git")
 list(APPEND CPACK_SOURCE_IGNORE_FILES "README")
 list(APPEND CPACK_SOURCE_IGNORE_FILES "HOWTORELEASE.txt")
 list(APPEND CPACK_SOURCE_IGNORE_FILES "/doc/_static/files")
 
 list(APPEND CPACK_SOURCE_IGNORE_FILES "CMakeCache.txt")
+list(APPEND CPACK_SOURCE_IGNORE_FILES "CMakeFiles")
 
+file(GLOB DISTS "libLAS*")
+list(APPEND CPACK_SOURCE_IGNORE_FILES ${DISTS})
+
+list(APPEND CPACK_SOURCE_IGNORE_FILES "Makefile")
+list(APPEND CPACK_SOURCE_IGNORE_FILES "cmake_install.cmak")
 list(APPEND CPACK_SOURCE_IGNORE_FILES "CPackConfig.cmake")
+list(APPEND CPACK_SOURCE_IGNORE_FILES "CPackSourceConfig.cmake")
+list(APPEND CPACK_SOURCE_IGNORE_FILES "CTestTestfile.cmake")
 list(APPEND CPACK_SOURCE_IGNORE_FILES "schemas")
 list(APPEND CPACK_SOURCE_IGNORE_FILES "hobu-config.bat")
 list(APPEND CPACK_SOURCE_IGNORE_FILES "mpg-config.bat")
@@ -397,6 +432,6 @@ include(CPack)
 
 add_custom_target(dist COMMAND ${CMAKE_MAKE_PROGRAM} package_source)
 
-#if (WIN32)
-#    include(BuildOSGeo4W)
-#endif(WIN32)
+if (WIN32 AND BUILD_OSGEO4W)
+    include(BuildOSGeo4W)
+endif ()

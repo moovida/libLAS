@@ -47,8 +47,6 @@
 #include <liblas/transform.hpp>
 #include <liblas/detail/private_utility.hpp>
 #include <liblas/export.hpp>
-// boost
-#include <boost/cstdint.hpp>
 
 #include <boost/concept_check.hpp>
 // std
@@ -60,6 +58,7 @@
 
 
 namespace liblas {
+
 
 template <typename T>
 class LAS_DLL Range
@@ -325,36 +324,34 @@ void (max)(std::size_t const& index, T v)
     ranges[index].maximum = v;
 }
 
-liblas::Point (min)() {
-    liblas::Point p;
-    try 
-    {
-        p.SetCoordinates(ranges[0].minimum, ranges[1].minimum, ranges[2].minimum);
-    } 
-    catch (std::runtime_error const& e)
-    {
-        ::boost::ignore_unused_variable_warning(e);
-        p.SetCoordinates(ranges[0].minimum, ranges[1].minimum, 0);
-        
-    }
-
-    return p;
-}
-
-liblas::Point (max)() {
-    liblas::Point p;
-    try 
-    {
-        p.SetCoordinates(ranges[0].maximum, ranges[1].maximum, ranges[2].maximum);
-    } 
-    catch (std::runtime_error const& e)
-    {
-        ::boost::ignore_unused_variable_warning(e);
-        p.SetCoordinates(ranges[0].maximum, ranges[1].maximum, 0);
-        
-    }
-    return p;
-}
+// liblas::Point (min)() {
+//     liblas::Point p(&DefaultHeader::get());
+//     try
+//     {
+//         p.SetCoordinates(ranges[0].minimum, ranges[1].minimum, ranges[2].minimum);
+//     }
+//     catch (std::runtime_error const& )
+//     {
+//         p.SetCoordinates(ranges[0].minimum, ranges[1].minimum, 0);
+//
+//     }
+//
+//     return p;
+// }
+//
+// liblas::Point (max)() {
+//     liblas::Point p(&DefaultHeader::get());
+//     try
+//     {
+//         p.SetCoordinates(ranges[0].maximum, ranges[1].maximum, ranges[2].maximum);
+//     }
+//     catch (std::runtime_error const& )
+//     {
+//         p.SetCoordinates(ranges[0].maximum, ranges[1].maximum, 0);
+//
+//     }
+//     return p;
+// }
 
 T minx() const { if (ranges.size() == 0) return 0; return ranges[0].minimum; }
 T miny() const { if (ranges.size() < 2) return 0; return ranges[1].minimum; }
@@ -571,16 +568,16 @@ void verify()
     }
 }
 
-Bounds<T> project(liblas::SpatialReference const& in_ref, liblas::SpatialReference const& out_ref)
-{
-    liblas::ReprojectionTransform trans(in_ref, out_ref);
-    
-    liblas::Point minimum = (min)();
-    liblas::Point maximum = (max)();
-    trans.transform(minimum);
-    trans.transform(maximum);
-    return Bounds<T>(minimum, maximum);
-}
+// Bounds<T> project(liblas::SpatialReference const& in_ref, liblas::SpatialReference const& out_ref)
+// {
+//     liblas::ReprojectionTransform trans(in_ref, out_ref);
+//
+//     liblas::Point minimum = (min)();
+//     liblas::Point maximum = (max)();
+//     trans.transform(minimum);
+//     trans.transform(maximum);
+//     return Bounds<T>(minimum, maximum);
+// }
 
 
 
