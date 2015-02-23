@@ -13,8 +13,9 @@ then
     echo "Install some dependencies"
     sudo apt-get install libboost-dev libboost-program-options-dev \
         libboost-thread-dev libboost-system-dev \
+	libboost-iostreams-dev libboost-filesystem-dev \
         libproj0 proj-bin libproj-dev libtiff-dev libgeotiff-dev \
-        libgdal1-dev gdal-bin python-gdal libgdal1 cmake g++
+        libgdal1-dev gdal-bin python-gdal libgdal1h cmake g++
 fi
 
 if [ DO_LASZIP ]
